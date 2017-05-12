@@ -7,7 +7,7 @@ use DB;
 
 class Profiles extends Model
 {
-  protected $table = 'Profiles';
+  protected $table = 'profiles';
 
   protected $guarded = ['id'];
 
