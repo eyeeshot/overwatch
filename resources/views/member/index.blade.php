@@ -13,50 +13,42 @@
           <thead>
             <tr>
               <th>#</th>
-              <th>플레이어</th>
-              <th>경쟁전</th>
+              <th>플레이어 (배틀태그)</th>
+              <th>레벨</th>
+              <th>경쟁전 (전일대비)</th>
               <th>플레이시간</th>
-              <th>승률</th>
-              <th>K/D</th>
-              <th>평균폭주</th>
-              <th>모스트</th>
-              <th>직업</th>
+              <th>승/패</th>
+              <th style="width: 260px;">승률</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>1</td>
-              <th>eyeshot</th>
-              <th><img src='https://overlog.gg/img/rankIcon/TierGrandMaster.png' width="25">4800</th>
-              <th>312 시간</th>
-              <th>82</th>
-              <th>4.2</th>
-              <th>1분20초</th>
-              <th><img src="https://d1u1mce87gyfbn.cloudfront.net/game/heroes/small/0x02E0000000000042.png"  width="30" alt=""></th>
-              <th>DPS</th>
-            </tr>
-            <tr>
-              <td>2</td>
-              <th>히릿</th>
-              <th><img src='https://overlog.gg/img/rankIcon/TierGrandMaster.png'  width="25">4660</th>
-              <th>22 시간</th>
-              <th>42</th>
-              <th>2.2</th>
-              <th>20초</th>
-              <th><img src="https://d1u1mce87gyfbn.cloudfront.net/game/heroes/small/0x02E000000000012E.png"  width="30" alt=""></th>
-              <th>Supporting</th>
-            </tr>
-            <tr>
-              <td>3</td>
-              <th>별님</th>
-              <th><img src='https://overlog.gg/img/rankIcon/TierGrandMaster.png' width="25">4600</th>
-              <th>512 시간</th>
-              <th>12</th>
-              <th>8.2</th>
-              <th>1초</th>
-              <th><img src="https://d1u1mce87gyfbn.cloudfront.net/game/heroes/small/0x02E000000000007A.png" width="30" alt=""></th>
-              <th>Supporting</th>
-            </tr>
+            @forelse($users as $indexKey => $user)
+              <tr>
+                <td>{{$indexKey+1}}</td>
+                <td><img src='{{ url('/') }}/storage/images/{{$user->img_path}}' style="width:32px;"> {{$user->nick_name}} <font style='font-size:10px;'>({{$user->battletag}})</font></td>
+                <td>LV.{{$user->level}}</td>
+                <td>{{$user->competitive_rank}} <font style='font-size:10px; color:{{$user->change_rank_color}}'>( {{$user->change_rank}} )</font></td>
+                <td>{{$user->competitive_playtime}}</td>
+                <td>W {{$user->competitive_win}} / L {{$user->competitive_lost}}</td>
+                <td>
+                  <div style="inline:block">
+                    <div style="height:4px;">
+                      <div class="progress">
+                        <div class="progress-bar progress-bar-success" style="width: {{$user->competitive_per}}%"></div>
+                        <div class="progress-bar progress-bar-danger" style="width: {{100-$user->competitive_per}}%"></div>
+                      </div>
+                    </div>
+                    <div style="margin-left:4px;">
+                      {{$user->competitive_per}} %
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            @empty
+              <tr>
+                <td colspan="6"> 유저가 없습니다.</td>
+              </tr>
+	          @endforelse
           </tbody>
         </table>
       </div>
