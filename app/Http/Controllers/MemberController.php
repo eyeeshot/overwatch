@@ -17,7 +17,6 @@ class MemberController extends Controller
     $users = $users->join('profiles' , function($join) {
                 $join->on('profiles.id' , '=' , DB::RAW('(select a.id from profiles a where a.user_id = users.id order by a.created_at desc limit 1)'));
             } , 'left inner')
-            ->orderBy('profiles.created_at', 'DESC')
             ->orderBy('competitive_rank', 'DESC')
             ->get();
 
@@ -29,7 +28,7 @@ class MemberController extends Controller
         $user->competitive_lost = $user->competitive_play - $user->competitive_win;
         $user->competitive_playtime = str_replace('hours', '시간',$user->competitive_playtime);
         $last_point_arr = new profiles;
-        $last_point_arr = $last_point_arr->where('user_id','=',$user->user_id)->where('created_at','<',$user->created_at)->first();
+        $last_point_arr = $last_point_arr->where('user_id','=',$user->user_id)->where('created_at','<',$user->created_at)->orderBy('created_at', 'DESC')->first();
         $user->change_rank = $user->competitive_rank - $last_point_arr->competitive_rank;
         if($user->change_rank<0){
           $user->change_rank_color = 'red';
