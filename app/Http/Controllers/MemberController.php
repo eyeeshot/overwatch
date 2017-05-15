@@ -17,6 +17,7 @@ class MemberController extends Controller
     $users = $users->join('profiles' , function($join) {
                 $join->on('profiles.id' , '=' , DB::RAW('(select a.id from profiles a where a.user_id = users.id order by a.created_at desc limit 1)'));
             } , 'left inner')
+            ->orderBy('created_at', 'DESC')
             ->orderBy('competitive_rank', 'DESC')
             ->get();
 
