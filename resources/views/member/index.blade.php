@@ -17,8 +17,9 @@
               <th>레벨</th>
               <th>경쟁전 (전일대비)</th>
               <th>플레이시간</th>
-              <th>승/패</th>
+              <th>승/패(무)</th>
               <th style="width: 260px;">승률</th>
+              <th style="width: 260px;">모스트</th>
             </tr>
           </thead>
           <tbody>
@@ -29,19 +30,26 @@
                 <td>LV.{{$user->level}}</td>
                 <td>{{$user->competitive_rank}} <font style='font-size:10px; color:{{$user->change_rank_color}}'>( {{$user->change_rank}} )</font></td>
                 <td>{{$user->competitive_playtime}}</td>
-                <td>W {{$user->competitive_win}} / L {{$user->competitive_lost}}</td>
+                <td> {{$user->competitive_win}} 승 {{$user->competitive_ties}} 무 {{$user->competitive_losses}} 패</td>
                 <td>
                   <div style="inline:block">
                     <div style="height:4px;">
                       <div class="progress">
-                        <div class="progress-bar progress-bar-success" style="width: {{$user->competitive_per}}%"></div>
-                        <div class="progress-bar progress-bar-danger" style="width: {{100-$user->competitive_per}}%"></div>
+                        <div class="progress-bar progress-bar-success" style="width: {{$user->competitive_winrate}}%"></div>
+                        <div class="progress-bar progress-bar-danger" style="width: {{100-$user->competitive_winrate}}%"></div>
                       </div>
                     </div>
                     <div style="margin-left:4px;">
-                      {{$user->competitive_per}} %
+                      {{$user->competitive_winrate}} %
                     </div>
                   </div>
+                </td>
+                <td>
+                  @forelse($user->most as $most)
+                    <img src='{{$most}}' style="width:32px;">
+                  @empty
+                    없음
+                  @endforelse
                 </td>
               </tr>
             @empty
