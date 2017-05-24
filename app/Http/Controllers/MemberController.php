@@ -62,8 +62,9 @@ class MemberController extends Controller
 
         $most_arr = new Playtimes;
         $most_arr = $most_arr->select('reaper', 'tracer', 'sombra', 'mercy', 'soldier76', 'orisa', 'winston', 'ana', 'torbjorn', 'hanzo', 'genji', 'mei', 'zarya', 'bastion', 'symmetra', 'pharah', 'reinhardt', 'roadhog', 'lucio', 'dva', 'widowmaker', 'zenyatta', 'junkrat', 'mccree'
-                    )->where('user_id','=',$user->user_id)->orderBy('created_at', 'DESC')->first()->toArray();
-        if(is_array($most_arr)){
+                    )->where('user_id','=',$user->user_id)->orderBy('created_at', 'DESC')->first();
+        if(is_object($most_arr)){
+          $most_arr = $most_arr->toArray();
           array_multisort($most_arr, SORT_DESC);
           $i = 0;
           foreach ($most_arr as $key => $value){
