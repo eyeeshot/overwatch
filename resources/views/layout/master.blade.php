@@ -49,7 +49,7 @@
             <ul class="list-unstyled">
               <li class="pull-right"><a href="#top">Back to top</a></li>
             </ul>
-            <p>© 2017 soul.eyeshot.com</p>
+            <p>2017 soul.eyeshot.com</p>
           </div>
         </div>
 
@@ -61,5 +61,5 @@
 
     <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="./js/bootstrap.min.js"></script>
-    <script src="./assets/js/custom.js"></script>
+  </body>
 </html>
