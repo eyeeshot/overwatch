@@ -3,12 +3,11 @@
 namespace App\Models\Users;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Users\Stats;
 use DB;
 
-class Profiles extends Model
+class Stats extends Model
 {
-  protected $table = 'profiles';
+  protected $table = 'stats';
 
   protected $guarded = ['id'];
 
@@ -17,9 +16,9 @@ class Profiles extends Model
       return $this->belongsTo('App\Models\Users\Users','user_id','id');
   }
 
-  public function Stats()
+  public function Profiles()
   {
-      return $this->hasMany(Stats::class, 'profiles_id');
+      return $this->belongsTo('App\Models\Users\Profiles','profiles_id','id');
   }
 
 }
