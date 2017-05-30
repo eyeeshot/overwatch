@@ -111,6 +111,7 @@ class MemberController extends Controller
                     ->where('users.block_yn' , '=' , 'N')
                     ->get();
     foreach($users_arr AS $user) {
+        $last_profile = Profiles::where('user_id', $user->id)->orderBy(DB::RAW('DATE_FORMAT(created_at,"%Y-%m-%d")'), 'DESC')->first();
         $name = str_replace('#','-',$user->battletag);
         $url = 'https://owapi.net/api/v3/u/'.urlencode($name).'/blob';
         $curl = curl_init($url);
@@ -125,150 +126,153 @@ class MemberController extends Controller
         $json = json_decode($html);
 
         if(is_object($json)){
-          $file_name = basename($json->kr->stats->competitive->overall_stats->avatar);
-          $path = storage_path('/app/images/portrait/' . $file_name);
+          if($last_profile->competitive_play != $json->kr->stats->competitive->overall_stats->games){
+            $file_name = basename($json->kr->stats->competitive->overall_stats->avatar);
+            $path = storage_path('/app/images/portrait/' . $file_name);
 
 
-          if (!File::exists($path)) {
-            $img = Image::make($json->kr->stats->competitive->overall_stats->avatar);
-            $img->save($path);
-          }
 
-          if($user->profile_date == $today){
-            echo "프로파일 패수";
-            echo "<br>";
-          }else{
-            $profile = new Profiles;
-            $profile->user_id = $user->id;
-            $profile->level = intval($json->kr->stats->competitive->overall_stats->prestige * 100) + intval($json->kr->stats->competitive->overall_stats->level);
-            $profile->quickplay_win = $json->kr->stats->quickplay->overall_stats->wins;
-            $profile->quickplay_play = $json->kr->stats->quickplay->overall_stats->games;
-            $profile->quickplay_playtime = $json->kr->stats->quickplay->game_stats->time_played;
-            $profile->competitive_win = $json->kr->stats->competitive->overall_stats->wins;
-            $profile->competitive_play = $json->kr->stats->competitive->overall_stats->games;
-            $profile->competitive_playtime = $json->kr->stats->competitive->game_stats->time_played;
-            $profile->competitive_rank = $json->kr->stats->competitive->overall_stats->comprank;
-            $profile->competitive_winrate = $json->kr->stats->competitive->overall_stats->win_rate;
-            $profile->competitive_losses = $json->kr->stats->competitive->overall_stats->losses;
-            $profile->competitive_ties = $json->kr->stats->competitive->overall_stats->ties;
-            $profile->competitive_tier = $json->kr->stats->competitive->overall_stats->comprank;
-            $profile->created_at = $now_time;
-            $profile->portrait = $file_name;
-            $profile->save();
-          }
-
-          if($user->playtimes_date == $today){
-            echo "플레이타임 패수";
-            echo "<br>";
-          }else{
-            $playtime = new Playtimes;
-            $playtime->user_id = $user->id;
-            $playtime->type = "competitive";
-            $playtime->reaper = $json->kr->heroes->playtime->competitive->reaper;
-            $playtime->tracer = $json->kr->heroes->playtime->competitive->tracer;
-            $playtime->sombra = $json->kr->heroes->playtime->competitive->sombra;
-            $playtime->mercy = $json->kr->heroes->playtime->competitive->mercy;
-            $playtime->soldier76 = $json->kr->heroes->playtime->competitive->soldier76;
-            $playtime->orisa = $json->kr->heroes->playtime->competitive->orisa;
-            $playtime->winston = $json->kr->heroes->playtime->competitive->winston;
-            $playtime->ana = $json->kr->heroes->playtime->competitive->ana;
-            $playtime->torbjorn = $json->kr->heroes->playtime->competitive->torbjorn;
-            $playtime->hanzo = $json->kr->heroes->playtime->competitive->hanzo;
-            $playtime->genji = $json->kr->heroes->playtime->competitive->genji;
-            $playtime->mei = $json->kr->heroes->playtime->competitive->mei;
-            $playtime->zarya = $json->kr->heroes->playtime->competitive->zarya;
-            $playtime->bastion = $json->kr->heroes->playtime->competitive->bastion;
-            $playtime->symmetra = $json->kr->heroes->playtime->competitive->symmetra;
-            $playtime->pharah = $json->kr->heroes->playtime->competitive->pharah;
-            $playtime->reinhardt = $json->kr->heroes->playtime->competitive->reinhardt;
-            $playtime->roadhog = $json->kr->heroes->playtime->competitive->roadhog;
-            $playtime->lucio = $json->kr->heroes->playtime->competitive->lucio;
-            $playtime->dva = $json->kr->heroes->playtime->competitive->dva;
-            $playtime->widowmaker = $json->kr->heroes->playtime->competitive->widowmaker;
-            $playtime->zenyatta = $json->kr->heroes->playtime->competitive->zenyatta;
-            $playtime->junkrat = $json->kr->heroes->playtime->competitive->junkrat;
-            $playtime->mccree = $json->kr->heroes->playtime->competitive->mccree;
-            $playtime->created_at = $now_time;
-            $playtime->save();
-          }
-
-          foreach ($json->kr->heroes->stats->competitive as $key => $value) {
-            if(Stats::where('user_id', $user->id)->where(DB::RAW('DATE_FORMAT(created_at,"%Y-%m-%d")'), $today)->where('profiles_id', $user->profiles_id)->where('hero', $key)->first()){
-              echo "있다";
-            }else{
-              $stats = new Stats;
-              $stats->type = "competitive";
-              $stats->user_id = $user->id;
-              $stats->profiles_id = $user->profiles_id;
-              $stats->hero = $key;
-              $stats->damage_done_most_in_game = property_exists($value->general_stats,'damage_done_most_in_game')?$value->general_stats->damage_done_most_in_game:0;
-              $stats->games_won = property_exists($value->general_stats,'games_won')?$value->general_stats->games_won:0;
-              $stats->self_healing_most_in_game = property_exists($value->general_stats,'self_healing_most_in_game')?$value->general_stats->self_healing_most_in_game:0;
-              $stats->time_spent_on_fire = property_exists($value->general_stats,'time_spent_on_fire')?$value->general_stats->time_spent_on_fire:0;
-              $stats->win_percentage = property_exists($value->general_stats,'win_percentage')?$value->general_stats->win_percentage:0;
-              $stats->solo_kills = property_exists($value->general_stats,'solo_kills')?$value->general_stats->solo_kills:0;
-              $stats->eliminations_per_life = property_exists($value->general_stats,'eliminations_per_life')?$value->general_stats->eliminations_per_life:0;
-              $stats->self_healing = property_exists($value->general_stats,'self_healing')?$value->general_stats->self_healing:0;
-              $stats->shots_fired = property_exists($value->general_stats,'shots_fired')?$value->general_stats->shots_fired:0;
-              $stats->medals_bronze = property_exists($value->general_stats,'medals_bronze')?$value->general_stats->medals_bronze:0;
-              $stats->objective_kills = property_exists($value->general_stats,'objective_kills')?$value->general_stats->objective_kills:0;
-              $stats->final_blows = property_exists($value->general_stats,'final_blows')?$value->general_stats->final_blows:0;
-              $stats->eliminations_most_in_life = property_exists($value->general_stats,'eliminations_most_in_life')?$value->general_stats->eliminations_most_in_life:0;
-              $stats->deaths = property_exists($value->general_stats,'deaths')?$value->general_stats->deaths:0;
-              $stats->time_spent_on_fire_most_in_game = property_exists($value->general_stats,'time_spent_on_fire_most_in_game')?$value->general_stats->time_spent_on_fire_most_in_game:0;
-              $stats->medals_gold = property_exists($value->general_stats,'medals_gold')?$value->general_stats->medals_gold:0;
-              $stats->games_lost = property_exists($value->general_stats,'games_lost')?$value->general_stats->games_lost:0;
-              $stats->critical_hits_most_in_life = property_exists($value->general_stats,'critical_hits_most_in_life')?$value->general_stats->critical_hits_most_in_life:0;
-              $stats->objective_time_most_in_game = property_exists($value->general_stats,'objective_time_most_in_game')?$value->general_stats->objective_time_most_in_game:0;
-              $stats->weapon_accuracy = property_exists($value->general_stats,'weapon_accuracy')?$value->general_stats->weapon_accuracy:0;
-              $stats->kill_streak_best = property_exists($value->general_stats,'kill_streak_best')?$value->general_stats->kill_streak_best:0;
-              $stats->critical_hit_accuracy = property_exists($value->general_stats,'critical_hit_accuracy')?$value->general_stats->critical_hit_accuracy:0;
-              $stats->healing_done = property_exists($value->general_stats,'healing_done')?$value->general_stats->healing_done:0;
-              $stats->critical_hits_most_in_game = property_exists($value->general_stats,'critical_hits_most_in_game')?$value->general_stats->critical_hits_most_in_game:0;
-              $stats->environmental_kills = property_exists($value->general_stats,'environmental_kills')?$value->general_stats->environmental_kills:0;
-              $stats->multikills = property_exists($value->general_stats,'multikills')?$value->general_stats->multikills:0;
-              $stats->environmental_deaths = property_exists($value->general_stats,'environmental_deaths')?$value->general_stats->environmental_deaths:0;
-              $stats->solo_kills_most_in_game = property_exists($value->general_stats,'solo_kills_most_in_game')?$value->general_stats->solo_kills_most_in_game:0;
-              $stats->weapon_accuracy_best_in_game = property_exists($value->general_stats,'weapon_accuracy_best_in_game')?$value->general_stats->weapon_accuracy_best_in_game:0;
-              $stats->multikill_best = property_exists($value->general_stats,'multikill_best')?$value->general_stats->multikill_best:0;
-              $stats->cards = property_exists($value->general_stats,'cards')?$value->general_stats->cards:0;
-              $stats->objective_kills_most_in_game = property_exists($value->general_stats,'objective_kills_most_in_game')?$value->general_stats->objective_kills_most_in_game:0;
-              $stats->games_played = property_exists($value->general_stats,'games_played')?$value->general_stats->games_played:0;
-              $stats->eliminations_most_in_game = property_exists($value->general_stats,'eliminations_most_in_game')?$value->general_stats->eliminations_most_in_game:0;
-              $stats->time_played = property_exists($value->general_stats,'time_played')?$value->general_stats->time_played:0;
-              $stats->healing_done_most_in_life = property_exists($value->general_stats,'healing_done_most_in_life')?$value->general_stats->healing_done_most_in_life:0;
-              $stats->damage_done = property_exists($value->general_stats,'damage_done')?$value->general_stats->damage_done:0;
-              $stats->damage_done_most_in_life = property_exists($value->general_stats,'damage_done_most_in_life')?$value->general_stats->damage_done_most_in_life:0;
-              $stats->healing_done_most_in_game = property_exists($value->general_stats,'healing_done_most_in_game')?$value->general_stats->healing_done_most_in_game:0;
-              $stats->shots_hit = property_exists($value->general_stats,'shots_hit')?$value->general_stats->shots_hit:0;
-              $stats->final_blows_most_in_game = property_exists($value->general_stats,'final_blows_most_in_game')?$value->general_stats->final_blows_most_in_game:0;
-              $stats->eliminations = property_exists($value->general_stats,'eliminations')?$value->general_stats->eliminations:0;
-              $stats->turrets_destroyed = property_exists($value->general_stats,'turrets_destroyed')?$value->general_stats->turrets_destroyed:0;
-              $stats->critical_hits = property_exists($value->general_stats,'critical_hits')?$value->general_stats->critical_hits:0;
-              $stats->medals_silver = property_exists($value->general_stats,'medals_silver')?$value->general_stats->medals_silver:0;
-              $stats->objective_time = property_exists($value->general_stats,'objective_time')?$value->general_stats->objective_time:0;
-              $stats->medals = property_exists($value->general_stats,'medals')?$value->general_stats->medals:0;
-              $stats->games_tied = property_exists($value->general_stats,'games_tied')?$value->general_stats->games_tied:0;
-              $stats->melee_final_blows = property_exists($value->general_stats,'melee_final_blows')?$value->general_stats->melee_final_blows:0;
-              $stats->teleporter_pads_destroyed = property_exists($value->general_stats,'teleporter_pads_destroyed')?$value->general_stats->teleporter_pads_destroyed:0;
-              $stats->time_spent_on_fire_average = property_exists($value->average_stats,'time_spent_on_fire_average')?$value->average_stats->time_spent_on_fire_average:0;
-              $stats->final_blows_average = property_exists($value->average_stats,'final_blows_average')?$value->average_stats->final_blows_average:0;
-              $stats->self_healing_average = property_exists($value->average_stats,'self_healing_average')?$value->average_stats->self_healing_average:0;
-              $stats->objective_kills_average = property_exists($value->average_stats,'objective_kills_average')?$value->average_stats->objective_kills_average:0;
-              $stats->critical_hits_average = property_exists($value->average_stats,'critical_hits_average')?$value->average_stats->critical_hits_average:0;
-              $stats->solo_kills_average = property_exists($value->average_stats,'solo_kills_average')?$value->average_stats->solo_kills_average:0;
-              $stats->melee_final_blows_average = property_exists($value->average_stats,'melee_final_blows_average')?$value->average_stats->melee_final_blows_average:0;
-              $stats->helix_rockets_kills_average = property_exists($value->average_stats,'helix_rockets_kills_average')?$value->average_stats->helix_rockets_kills_average:0;
-              $stats->objective_time_average = property_exists($value->average_stats,'objective_time_average')?$value->average_stats->objective_time_average:0;
-              $stats->damage_done_average = property_exists($value->average_stats,'damage_done_average')?$value->average_stats->damage_done_average:0;
-              $stats->healing_done_average = property_exists($value->average_stats,'healing_done_average')?$value->average_stats->healing_done_average:0;
-              $stats->tactical_visor_kills_average = property_exists($value->average_stats,'tactical_visor_kills_average')?$value->average_stats->tactical_visor_kills_average:0;
-              $stats->deaths_average = property_exists($value->average_stats,'deaths_average')?$value->average_stats->deaths_average:0;
-              $stats->eliminations_average = property_exists($value->average_stats,'eliminations_average')?$value->average_stats->eliminations_average:0;
-              $stats->save();
+            if (!File::exists($path)) {
+              $img = Image::make($json->kr->stats->competitive->overall_stats->avatar);
+              $img->save($path);
             }
+
+            if($user->profile_date == $today){
+              echo "프로파일 패수";
+              echo "<br>";
+            }else{
+              $profile = new Profiles;
+              $profile->user_id = $user->id;
+              $profile->level = intval($json->kr->stats->competitive->overall_stats->prestige * 100) + intval($json->kr->stats->competitive->overall_stats->level);
+              $profile->competitive_win = $json->kr->stats->competitive->overall_stats->wins;
+              $profile->competitive_daily_win = intval($json->kr->stats->competitive->overall_stats->wins) - intval($last_profile->competitive_win);
+              $profile->competitive_play = $json->kr->stats->competitive->overall_stats->games;
+              $profile->competitive_playtime = $json->kr->stats->competitive->game_stats->time_played;
+              $profile->competitive_rank = $json->kr->stats->competitive->overall_stats->comprank;
+              $profile->competitive_winrate = $json->kr->stats->competitive->overall_stats->win_rate;
+              $profile->competitive_losses = $json->kr->stats->competitive->overall_stats->losses;
+              $profile->competitive_daily_losses = intval($json->kr->stats->competitive->overall_stats->losses) - intval($last_profile->competitive_losses);
+              $profile->competitive_ties = $json->kr->stats->competitive->overall_stats->ties;
+              $profile->competitive_daily_ties = intval($json->kr->stats->competitive->overall_stats->ties) - intval($last_profile->competitive_ties);
+              $profile->competitive_tier = $json->kr->stats->competitive->overall_stats->comprank;
+              $profile->created_at = $now_time;
+              $profile->portrait = $file_name;
+              $profile->save();
+            }
+
+            if($user->playtimes_date == $today){
+              echo "플레이타임 패수";
+              echo "<br>";
+            }else{
+              $playtime = new Playtimes;
+              $playtime->user_id = $user->id;
+              $playtime->type = "competitive";
+              $playtime->reaper = $json->kr->heroes->playtime->competitive->reaper;
+              $playtime->tracer = $json->kr->heroes->playtime->competitive->tracer;
+              $playtime->sombra = $json->kr->heroes->playtime->competitive->sombra;
+              $playtime->mercy = $json->kr->heroes->playtime->competitive->mercy;
+              $playtime->soldier76 = $json->kr->heroes->playtime->competitive->soldier76;
+              $playtime->orisa = $json->kr->heroes->playtime->competitive->orisa;
+              $playtime->winston = $json->kr->heroes->playtime->competitive->winston;
+              $playtime->ana = $json->kr->heroes->playtime->competitive->ana;
+              $playtime->torbjorn = $json->kr->heroes->playtime->competitive->torbjorn;
+              $playtime->hanzo = $json->kr->heroes->playtime->competitive->hanzo;
+              $playtime->genji = $json->kr->heroes->playtime->competitive->genji;
+              $playtime->mei = $json->kr->heroes->playtime->competitive->mei;
+              $playtime->zarya = $json->kr->heroes->playtime->competitive->zarya;
+              $playtime->bastion = $json->kr->heroes->playtime->competitive->bastion;
+              $playtime->symmetra = $json->kr->heroes->playtime->competitive->symmetra;
+              $playtime->pharah = $json->kr->heroes->playtime->competitive->pharah;
+              $playtime->reinhardt = $json->kr->heroes->playtime->competitive->reinhardt;
+              $playtime->roadhog = $json->kr->heroes->playtime->competitive->roadhog;
+              $playtime->lucio = $json->kr->heroes->playtime->competitive->lucio;
+              $playtime->dva = $json->kr->heroes->playtime->competitive->dva;
+              $playtime->widowmaker = $json->kr->heroes->playtime->competitive->widowmaker;
+              $playtime->zenyatta = $json->kr->heroes->playtime->competitive->zenyatta;
+              $playtime->junkrat = $json->kr->heroes->playtime->competitive->junkrat;
+              $playtime->mccree = $json->kr->heroes->playtime->competitive->mccree;
+              $playtime->created_at = $now_time;
+              $playtime->save();
+            }
+
+            foreach ($json->kr->heroes->stats->competitive as $key => $value) {
+              if(Stats::where('user_id', $user->id)->where(DB::RAW('DATE_FORMAT(created_at,"%Y-%m-%d")'), $today)->where('profiles_id', $user->profiles_id)->where('hero', $key)->first()){
+                echo "있다";
+              }else{
+                $stats = new Stats;
+                $stats->type = "competitive";
+                $stats->user_id = $user->id;
+                $stats->profiles_id = $user->profiles_id;
+                $stats->hero = $key;
+                $stats->damage_done_most_in_game = property_exists($value->general_stats,'damage_done_most_in_game')?$value->general_stats->damage_done_most_in_game:0;
+                $stats->games_won = property_exists($value->general_stats,'games_won')?$value->general_stats->games_won:0;
+                $stats->self_healing_most_in_game = property_exists($value->general_stats,'self_healing_most_in_game')?$value->general_stats->self_healing_most_in_game:0;
+                $stats->time_spent_on_fire = property_exists($value->general_stats,'time_spent_on_fire')?$value->general_stats->time_spent_on_fire:0;
+                $stats->win_percentage = property_exists($value->general_stats,'win_percentage')?$value->general_stats->win_percentage:0;
+                $stats->solo_kills = property_exists($value->general_stats,'solo_kills')?$value->general_stats->solo_kills:0;
+                $stats->eliminations_per_life = property_exists($value->general_stats,'eliminations_per_life')?$value->general_stats->eliminations_per_life:0;
+                $stats->self_healing = property_exists($value->general_stats,'self_healing')?$value->general_stats->self_healing:0;
+                $stats->shots_fired = property_exists($value->general_stats,'shots_fired')?$value->general_stats->shots_fired:0;
+                $stats->medals_bronze = property_exists($value->general_stats,'medals_bronze')?$value->general_stats->medals_bronze:0;
+                $stats->objective_kills = property_exists($value->general_stats,'objective_kills')?$value->general_stats->objective_kills:0;
+                $stats->final_blows = property_exists($value->general_stats,'final_blows')?$value->general_stats->final_blows:0;
+                $stats->eliminations_most_in_life = property_exists($value->general_stats,'eliminations_most_in_life')?$value->general_stats->eliminations_most_in_life:0;
+                $stats->deaths = property_exists($value->general_stats,'deaths')?$value->general_stats->deaths:0;
+                $stats->time_spent_on_fire_most_in_game = property_exists($value->general_stats,'time_spent_on_fire_most_in_game')?$value->general_stats->time_spent_on_fire_most_in_game:0;
+                $stats->medals_gold = property_exists($value->general_stats,'medals_gold')?$value->general_stats->medals_gold:0;
+                $stats->games_lost = property_exists($value->general_stats,'games_lost')?$value->general_stats->games_lost:0;
+                $stats->critical_hits_most_in_life = property_exists($value->general_stats,'critical_hits_most_in_life')?$value->general_stats->critical_hits_most_in_life:0;
+                $stats->objective_time_most_in_game = property_exists($value->general_stats,'objective_time_most_in_game')?$value->general_stats->objective_time_most_in_game:0;
+                $stats->weapon_accuracy = property_exists($value->general_stats,'weapon_accuracy')?$value->general_stats->weapon_accuracy:0;
+                $stats->kill_streak_best = property_exists($value->general_stats,'kill_streak_best')?$value->general_stats->kill_streak_best:0;
+                $stats->critical_hit_accuracy = property_exists($value->general_stats,'critical_hit_accuracy')?$value->general_stats->critical_hit_accuracy:0;
+                $stats->healing_done = property_exists($value->general_stats,'healing_done')?$value->general_stats->healing_done:0;
+                $stats->critical_hits_most_in_game = property_exists($value->general_stats,'critical_hits_most_in_game')?$value->general_stats->critical_hits_most_in_game:0;
+                $stats->environmental_kills = property_exists($value->general_stats,'environmental_kills')?$value->general_stats->environmental_kills:0;
+                $stats->multikills = property_exists($value->general_stats,'multikills')?$value->general_stats->multikills:0;
+                $stats->environmental_deaths = property_exists($value->general_stats,'environmental_deaths')?$value->general_stats->environmental_deaths:0;
+                $stats->solo_kills_most_in_game = property_exists($value->general_stats,'solo_kills_most_in_game')?$value->general_stats->solo_kills_most_in_game:0;
+                $stats->weapon_accuracy_best_in_game = property_exists($value->general_stats,'weapon_accuracy_best_in_game')?$value->general_stats->weapon_accuracy_best_in_game:0;
+                $stats->multikill_best = property_exists($value->general_stats,'multikill_best')?$value->general_stats->multikill_best:0;
+                $stats->cards = property_exists($value->general_stats,'cards')?$value->general_stats->cards:0;
+                $stats->objective_kills_most_in_game = property_exists($value->general_stats,'objective_kills_most_in_game')?$value->general_stats->objective_kills_most_in_game:0;
+                $stats->games_played = property_exists($value->general_stats,'games_played')?$value->general_stats->games_played:0;
+                $stats->eliminations_most_in_game = property_exists($value->general_stats,'eliminations_most_in_game')?$value->general_stats->eliminations_most_in_game:0;
+                $stats->time_played = property_exists($value->general_stats,'time_played')?$value->general_stats->time_played:0;
+                $stats->healing_done_most_in_life = property_exists($value->general_stats,'healing_done_most_in_life')?$value->general_stats->healing_done_most_in_life:0;
+                $stats->damage_done = property_exists($value->general_stats,'damage_done')?$value->general_stats->damage_done:0;
+                $stats->damage_done_most_in_life = property_exists($value->general_stats,'damage_done_most_in_life')?$value->general_stats->damage_done_most_in_life:0;
+                $stats->healing_done_most_in_game = property_exists($value->general_stats,'healing_done_most_in_game')?$value->general_stats->healing_done_most_in_game:0;
+                $stats->shots_hit = property_exists($value->general_stats,'shots_hit')?$value->general_stats->shots_hit:0;
+                $stats->final_blows_most_in_game = property_exists($value->general_stats,'final_blows_most_in_game')?$value->general_stats->final_blows_most_in_game:0;
+                $stats->eliminations = property_exists($value->general_stats,'eliminations')?$value->general_stats->eliminations:0;
+                $stats->turrets_destroyed = property_exists($value->general_stats,'turrets_destroyed')?$value->general_stats->turrets_destroyed:0;
+                $stats->critical_hits = property_exists($value->general_stats,'critical_hits')?$value->general_stats->critical_hits:0;
+                $stats->medals_silver = property_exists($value->general_stats,'medals_silver')?$value->general_stats->medals_silver:0;
+                $stats->objective_time = property_exists($value->general_stats,'objective_time')?$value->general_stats->objective_time:0;
+                $stats->medals = property_exists($value->general_stats,'medals')?$value->general_stats->medals:0;
+                $stats->games_tied = property_exists($value->general_stats,'games_tied')?$value->general_stats->games_tied:0;
+                $stats->melee_final_blows = property_exists($value->general_stats,'melee_final_blows')?$value->general_stats->melee_final_blows:0;
+                $stats->teleporter_pads_destroyed = property_exists($value->general_stats,'teleporter_pads_destroyed')?$value->general_stats->teleporter_pads_destroyed:0;
+                $stats->time_spent_on_fire_average = property_exists($value->average_stats,'time_spent_on_fire_average')?$value->average_stats->time_spent_on_fire_average:0;
+                $stats->final_blows_average = property_exists($value->average_stats,'final_blows_average')?$value->average_stats->final_blows_average:0;
+                $stats->self_healing_average = property_exists($value->average_stats,'self_healing_average')?$value->average_stats->self_healing_average:0;
+                $stats->objective_kills_average = property_exists($value->average_stats,'objective_kills_average')?$value->average_stats->objective_kills_average:0;
+                $stats->critical_hits_average = property_exists($value->average_stats,'critical_hits_average')?$value->average_stats->critical_hits_average:0;
+                $stats->solo_kills_average = property_exists($value->average_stats,'solo_kills_average')?$value->average_stats->solo_kills_average:0;
+                $stats->melee_final_blows_average = property_exists($value->average_stats,'melee_final_blows_average')?$value->average_stats->melee_final_blows_average:0;
+                $stats->helix_rockets_kills_average = property_exists($value->average_stats,'helix_rockets_kills_average')?$value->average_stats->helix_rockets_kills_average:0;
+                $stats->objective_time_average = property_exists($value->average_stats,'objective_time_average')?$value->average_stats->objective_time_average:0;
+                $stats->damage_done_average = property_exists($value->average_stats,'damage_done_average')?$value->average_stats->damage_done_average:0;
+                $stats->healing_done_average = property_exists($value->average_stats,'healing_done_average')?$value->average_stats->healing_done_average:0;
+                $stats->tactical_visor_kills_average = property_exists($value->average_stats,'tactical_visor_kills_average')?$value->average_stats->tactical_visor_kills_average:0;
+                $stats->deaths_average = property_exists($value->average_stats,'deaths_average')?$value->average_stats->deaths_average:0;
+                $stats->eliminations_average = property_exists($value->average_stats,'eliminations_average')?$value->average_stats->eliminations_average:0;
+                $stats->save();
+              }
+            }
+            sleep(10);
           }
-          sleep(10);
         }else{
           echo $url;
           echo "<br>";
