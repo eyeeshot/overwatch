@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class Stats extends Migration
+class HeroStats extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,14 @@ class Stats extends Migration
      */
     public function up()
     {
-      Schema::create('stats', function($table) {
+      Schema::create('hero_stats', function($table) {
         $table->increments('id');
         $table->string('type', 20);
         $table->integer('user_id')->unsigned()->index();
         $table->foreign('user_id')->references('id')->on('users');
-        $table->integer('profiles_id')->unsigned()->index();
-        $table->foreign('profiles_id')->references('id')->on('profiles');
-        $table->unique(['profiles_id', 'hero']);
+        $table->integer('stats_id')->unsigned()->index();
+        $table->foreign('stats_id')->references('id')->on('stats');
+        $table->unique(['stats_id', 'hero']);
         $table->string('hero', 20);
         $table->string('damage_done_most_in_game',20)->nullable();
         $table->string('games_won',20)->nullable();
