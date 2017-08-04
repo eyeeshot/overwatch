@@ -265,14 +265,13 @@ class MemberController extends Controller
               $stats->teleporter_pads_destroyed = property_exists($json->kr->stats->competitive->game_stats,'teleporter_pads_destroyed')?$json->kr->stats->competitive->game_stats->teleporter_pads_destroyed:0;
 
               $stats->save();
-              $last_stats = new object;
-              $last_stats->id = $stats->id;
+              $last_stats_id = $stats->id;
             }else{
-                echo "last : ".$last_stats;
+              $last_stats_id = $last_stats->id;
             }
 
             foreach ($json->kr->heroes->stats->competitive as $key => $value) {
-              if(Hero_Stats::where('user_id', $user->id)->where(DB::RAW('DATE_FORMAT(created_at,"%Y-%m-%d")'), $today)->where('stats_id', $last_stats->id)->where('hero', $key)->first()){
+              if(Hero_Stats::where('user_id', $user->id)->where(DB::RAW('DATE_FORMAT(created_at,"%Y-%m-%d")'), $today)->where('stats_id', $last_stats_id)->where('hero', $key)->first()){
                 echo "있다";
               }else{
                 $hero_stats = new Hero_Stats;
