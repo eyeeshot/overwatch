@@ -265,6 +265,7 @@ class MemberController extends Controller
               $stats->teleporter_pads_destroyed = property_exists($json->kr->stats->competitive->game_stats,'teleporter_pads_destroyed')?$json->kr->stats->competitive->game_stats->teleporter_pads_destroyed:0;
 
               $stats->save();
+              $last_stats = new object;
               $last_stats->id = $stats->id;
             }else{
                 echo "last : ".$last_stats;
