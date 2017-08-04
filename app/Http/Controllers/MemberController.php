@@ -63,7 +63,12 @@ class MemberController extends Controller
         $user->competitive_playtime = $user->competitive_playtime." 시간";
         $last_point_arr = new Profiles;
         $last_point_arr = $last_point_arr->where('user_id','=',$user->user_id)->where('created_at','<',$user->created_at)->orderBy('created_at', 'DESC')->first();
-        $user->change_rank = $user->competitive_rank - $last_point_arr->competitive_rank;
+        if($last_point_arr){
+          $last_point = $last_point_arr->competitive_rank;
+        }else{
+          $last_point = 0;
+        }
+        $user->change_rank = $user->competitive_rank - $last_point;
 
         $most_arr = new Playtimes;
         $most_arr = $most_arr->select('reaper', 'tracer', 'sombra', 'mercy', 'soldier76', 'orisa', 'winston', 'ana', 'torbjorn', 'hanzo', 'genji', 'mei', 'zarya', 'bastion', 'symmetra', 'pharah', 'reinhardt', 'roadhog', 'lucio', 'dva', 'widowmaker', 'zenyatta', 'junkrat', 'mccree'
