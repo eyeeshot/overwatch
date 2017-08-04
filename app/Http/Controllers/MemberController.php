@@ -277,7 +277,7 @@ class MemberController extends Controller
                 $hero_stats = new Hero_Stats;
                 $hero_stats->type = "competitive";
                 $hero_stats->user_id = $user->id;
-                $hero_stats->stats_id = $last_stats->id;
+                $hero_stats->stats_id = $last_stats_id;
                 $hero_stats->hero = $key;
                 $hero_stats->damage_done_most_in_game = property_exists($value->general_stats,'all_damage_done_most_in_game')?$value->general_stats->all_damage_done_most_in_game:0;
                 $hero_stats->games_won = property_exists($value->general_stats,'games_won')?$value->general_stats->games_won:0;
